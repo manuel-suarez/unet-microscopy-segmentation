@@ -9,6 +9,7 @@ Created on Tue Jan 30 21:42:23 2024
 import tensorflow as tf
 from tensorflow.keras import models, layers, regularizers
 from tensorflow.keras import backend as K
+import unittest
 
 #%% Define metrics and losses
 def dice_coef(y_true, y_pred):
@@ -199,35 +200,18 @@ def UNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True):
     
     # Model
     model = models.Model(inputs, outputs, name="UNet")
-    print(model.summary())
+    # print(model.summary())
     return model
 
+class TestUNet(unittest.TestCase):
+    def test_unet(self):
+        data = tf.random.uniform((1, 128, 128, 3))
+        model = UNet(input_shape=(128, 128, 3))
+        self.assertEqual(model(data).shape, (1, 128, 128, 2))
+
 if __name__ == "__main__":
-    UNet(input_shape=(128, 128, 3))
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    unet = UNet(input_shape=(128, 128, 3))
+    test = tf.random.uniform(shape=(1, 128, 128, 3))
+    print(unet(test).shape)
+
+    unittest.main()
