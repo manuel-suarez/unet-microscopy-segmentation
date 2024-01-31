@@ -69,9 +69,16 @@ class Encoder(tf.keras.layers.Layer):
         # Blocks
         self.block1 = EncoderBlock("encoder_block1", filters=64, batch_norm=batch_norm, dropout_rate=dropout_rate)
         self.block2 = EncoderBlock("encoder_block2", filters=128, batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.block3 = EncoderBlock("encoder_block3", filters=256, batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.block4 = EncoderBlock("encoder_block4", filters=512, batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.block5 = EncoderBlock("encoder_block5", filters=1024, batch_norm=batch_norm, dropout_rate=dropout_rate)
 
     def call(self, inputs):
         x = self.block1(inputs)
+        x = self.block2(inputs)
+        x = self.block3(inputs)
+        x = self.block4(inputs)
+        x = self.block5(inputs)
 
         return x
 
@@ -105,61 +112,9 @@ class UNet(tf.keras.Model):
 
         # Encoder Block 1
         # Encoder Block 2
-        block2_conv1 = layers.Conv2D(128, (3, 3), padding="same")(block1_pool)
-        if batch_norm:
-            block2_conv1 = layers.BatchNormalization(axis=3)(block2_conv1)
-        block2_relu1 = layers.Activation("relu")(block2_conv1)
-
-        block2_conv2 = layers.Conv2D(128, (3, 3), padding="same")(block2_relu1)
-        if batch_norm is True:
-            block2_conv2 = layers.BatchNormalization(axis=3)(block2_conv2)
-        block2_relu2 = layers.Activation("relu")(block2_conv2)
-
-        if dropout_rate > 0:
-            block2_relu2 = layers.Dropout(dropout_rate)(block2_relu2)
-        block2_pool = layers.MaxPooling2D(pool_size=(2,2))(block2_relu2)
         # Encoder Block 3
-        block3_conv1 = layers.Conv2D(256, (3, 3), padding="same")(block2_pool)
-        if batch_norm:
-            block3_conv1 = layers.BatchNormalization(axis=3)(block3_conv1)
-        block3_relu1 = layers.Activation("relu")(block3_conv1)
-
-        block3_conv2 = layers.Conv2D(128, (3, 3), padding="same")(block3_relu1)
-        if batch_norm:
-            block3_conv2 = layers.BatchNormalization(axis=3)(block3_conv2)
-        block3_relu2 = layers.Activation("relu")(block3_conv2)
-
-        if dropout_rate > 0:
-            block3_relu2 = layers.Dropout(dropout_rate)(block3_relu2)
-        block3_pool = layers.MaxPooling2D(pool_size=(2,2))(block3_relu2)
         # Encoder Block 4
-        block4_conv1 = layers.Conv2D(512, (3, 3), padding="same")(block3_pool)
-        if batch_norm:
-            block4_conv1 = layers.BatchNormalization(axis=3)(block4_conv1)
-        block4_relu1 = layers.Activation("relu")(block4_conv1)
-
-        block4_conv2 = layers.Conv2D(512, (3, 3), padding="same")(block4_relu1)
-        if batch_norm:
-            block4_conv2 = layers.BatchNormalization(axis=3)(block4_conv2)
-        block4_relu2 = layers.Activation("relu")(block4_conv2)
-
-        if dropout_rate > 0:
-            block4_relu2 = layers.Dropout(dropout_rate)(block4_relu2)
-        block4_pool = layers.MaxPooling2D(pool_size=(2,2))(block4_relu2)
         # Encoder Block 5 (Bottleneck)
-        block5_conv1 = layers.Conv2D(1024, (3, 3), padding="same")(block4_pool)
-        if batch_norm:
-            block5_conv1 = layers.BatchNormalization(axis=3)(block5_conv1)
-        block5_relu1 = layers.Activation("relu")(block5_conv1)
-
-        block5_conv2 = layers.Conv2D(1024, (3, 3), padding="same")(block5_relu1)
-        if batch_norm:
-            block5_conv2 = layers.BatchNormalization(axis=3)(block5_conv2)
-        block5_relu2 = layers.Activation("relu")(block5_conv2)
-
-        if dropout_rate > 0:
-            block5_relu2 = layers.Dropout(dropout_rate)(block5_relu2)
-
         # Decoder layers (Upsampling)
 
         # Decoder Layer 4
@@ -243,6 +198,22 @@ class TestEncoder(unittest.TestCase):
         input = tf.random.uniform((1, 64, 64, 64))
         model = Encoder().block2
         self.assertEqual(model(input).shape, (1, 64, 64, 128))
+
+    def test_block3(self):
+        input = tf.random.uniform((1, 32, 32, 128))
+        model = Encoder().block3
+        self.assertEqual(model(input).shape, (1, 32, 32, 256))
+
+    def test_block4(self):
+        input = tf.random.uniform((1, 16, 16, 256))
+        model = Encoder().block4
+        self.assertEqual(model(input).shape, (1, 16, 16, 512))
+
+    def test_block5(self):
+        input = tf.random.uniform((1, 8, 8, 512))
+        model = Encoder().block5
+        self.assertEqual((1, 8, 8, 1024), model(input).shape)
+
 
 class TestUNet(unittest.TestCase):
     def test_unet(self):
