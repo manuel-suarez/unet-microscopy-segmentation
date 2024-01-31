@@ -11,3 +11,10 @@ train_dir = os.path.join(work_dir, 'training')
 
 image_dir = os.path.join(train_dir, 'images')
 mask_dir = os.path.join(train_dir, 'masks')
+
+SIZE = 256
+image_dataset = []
+mask_dataset = []
+
+images = os.listdir(image_dir)
+print(images.shape)
