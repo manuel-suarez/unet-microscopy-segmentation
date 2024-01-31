@@ -71,7 +71,7 @@ from models import UNet, dice_coef, dice_loss, IoU_coef
 
 unet_model = UNet(input_shape)
 unet_model.compile(optimizer=Adam(learning_rate=1e-2), loss=BinaryFocalLoss(gamma=2),
-                   metrics=['accuracy', IoU_coef])
+                   metrics=['accuracy'])
 #print(unet_model.summary())
 
 start1 = datetime.now()
