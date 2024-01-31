@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 from PIL import Image
+from matplotlib import pyplot as plt
 
 home_dir = os.path.expanduser('~')
 base_dir = os.path.join(home_dir, 'data')
@@ -36,5 +37,19 @@ for i, image_name in tqdm(enumerate(masks)):
         image = image.resize((SIZE, SIZE))
         mask_dataset.append(np.array(image))
 
-print(len(image_dataset))
-print(len(mask_dataset))
+# Normalize images
+image_dataset = np.array(image_dataset)/255.
+mask_dataset = np.expand_dims((np.array(mask_dataset)),3)/255.
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(image_dataset, mask_dataset, test_size=0.10, random_state=0)
+
+import random
+import numpy as np
+image_number = random.randint(0, len(X_train))
+plt.figure(figsize=(12, 6))
+plt.subplot(121)
+plt.imshow(np.reshape(X_train[image_number], (256, 256, 3)), cmap='gray')
+plt.subplot(122)
+plt.imshow(np.reshape(y_train[image_number], (256, 256)), cmap='gray')
+plt.savefig('train.png')
