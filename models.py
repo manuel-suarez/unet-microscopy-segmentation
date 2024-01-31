@@ -114,7 +114,7 @@ def UNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True):
     
     if dropout_rate > 0:
         block4_relu2 = layers.Dropout(dropout_rate)(block4_relu2)
-    block4_pool = layers.MaxPoolindg2D(pool_size=(2,2))(block4_relu2)
+    block4_pool = layers.MaxPooling2D(pool_size=(2,2))(block4_relu2)
     # Encoder Block 5 (Bottleneck)
     block5_conv1 = layers.Conv2D(1024, (3, 3), padding="same")(block4_pool)
     if batch_norm:
