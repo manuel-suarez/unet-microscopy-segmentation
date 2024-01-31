@@ -19,14 +19,14 @@ def dice_coef(y_true, y_pred):
     intersection = K.sum(y_true_f * y_pred_f)
     return (2.0 * intersection + 1.0) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1.0)
 
-def jaccard_coef(y_true, y_pred):
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f)
-    return (intersection + 1.0) / (K.sum(y_true_f) + K.sum(y_pred_f) - intersection + 1.0)
+def IoU_coef(y_true, y_pred):
+    T = K.flatten(y_true)
+    P = K.flatten(y_pred)
+    intersection = K.sum(T * P)
+    return (intersection + 1.0) / (K.sum(T) + K.sum(T) - intersection + 1.0)
 
-def jaccard_loss(y_true, y_pred):
-    return -jaccard_coef(y_true, y_pred)
+def IoU_loss(y_true, y_pred):
+    return -IoU_coef(y_true, y_pred)
 
 def dice_loss(y_true, y_pred):
     return - dice_coef(y_true, y_pred)
