@@ -200,7 +200,6 @@ def UNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True):
     
     # Model
     model = models.Model(inputs, outputs, name="UNet")
-    # print(model.summary())
     return model
 
 class TestUNet(unittest.TestCase):
@@ -211,6 +210,7 @@ class TestUNet(unittest.TestCase):
 
 if __name__ == "__main__":
     unet = UNet(input_shape=(128, 128, 3))
+    print(unet.summary())
     test = tf.random.uniform(shape=(1, 128, 128, 3))
     print(unet(test).shape)
 
