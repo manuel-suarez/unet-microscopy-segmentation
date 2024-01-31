@@ -52,4 +52,5 @@ plt.subplot(121)
 plt.imshow(np.reshape(X_train[image_number], (256, 256, 3)), cmap='gray')
 plt.subplot(122)
 plt.imshow(np.reshape(y_train[image_number], (256, 256)), cmap='gray')
-plt.savefig('train.png')
+plt.show()
+
