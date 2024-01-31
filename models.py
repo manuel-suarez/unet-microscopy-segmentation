@@ -63,6 +63,17 @@ class Block1(tf.keras.layers.Layer):
 
         return x
 
+class Encoder(tf.keras.layers.Layer):
+    def __init__(self, name="encoder", batch_norm=True, dropout_rate=0, **kwargs):
+        super(Encoder, self).__init__(name=name, **kwargs)
+        # Blocks
+        self.block1 = Block1(batch_norm=batch_norm, dropout_rate=dropout_rate)
+
+    def call(self, inputs):
+        x = self.block1(inputs)
+
+        return x
+
 #%% Define networks architectures
 class UNet(tf.keras.Model):
     def __init__(self, input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True):
@@ -224,7 +235,7 @@ class UNet(tf.keras.Model):
 class TestEncoder(unittest.TestCase):
     def test_block1(self):
         input = tf.random.uniform((1, 128, 128, 3))
-        model = Block1()
+        model = Encoder().block1
         self.assertEqual(model(input).shape, (1, 128, 128, 64))
 
 class TestUNet(unittest.TestCase):
