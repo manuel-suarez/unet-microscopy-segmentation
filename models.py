@@ -33,7 +33,7 @@ def dice_loss(y_true, y_pred):
 
 #%% Define auxiliary blocks
 class EncoderBlock(tf.keras.layers.Layer):
-    def __init__(self, name, filters, batch_norm=True, dropout_rate=0, **kwargs):
+    def __init__(self, name, filters, batch_norm=True, dropout_rate=0.0, **kwargs):
         super(EncoderBlock, self).__init__(name=name, **kwargs)
         # Parameters
         self.batch_norm = batch_norm
@@ -64,7 +64,7 @@ class EncoderBlock(tf.keras.layers.Layer):
         return x
 
 class DecoderUpBlock(tf.keras.layers.Layer):
-    def __init__(self, name, filters, batch_norm=True, dropout_rate=0, **kwargs):
+    def __init__(self, name, filters, batch_norm=True, dropout_rate=0.0, **kwargs):
         super(DecoderUpBlock, self).__init__(name=name, **kwargs)
         # Parameters
         self.batch_norm = batch_norm
@@ -102,7 +102,7 @@ class DecoderUpBlock(tf.keras.layers.Layer):
         return x
 
 class Encoder(tf.keras.layers.Layer):
-    def __init__(self, name="encoder", batch_norm=True, dropout_rate=0, **kwargs):
+    def __init__(self, name="encoder", batch_norm=True, dropout_rate=0.0, **kwargs):
         super(Encoder, self).__init__(name=name, **kwargs)
         # Blocks
         self.block1 = EncoderBlock("encoder_block1", filters=64, batch_norm=batch_norm, dropout_rate=dropout_rate)
@@ -122,7 +122,7 @@ class Encoder(tf.keras.layers.Layer):
         return x5, [x1, x2, x3, x4]
 
 class Decoder(tf.keras.layers.Layer):
-    def __init__(self, name="decoder", batch_norm=True, dropout_rate=0, **kwargs):
+    def __init__(self, name="decoder", batch_norm=True, dropout_rate=0.0, **kwargs):
         super(Decoder, self).__init__(name=name, **kwargs)
         # Blocks
         self.upblock4 = DecoderUpBlock("decoder_upblock4", filters=512, batch_norm=batch_norm, dropout_rate=dropout_rate)
