@@ -279,11 +279,4 @@ class TestUNet(unittest.TestCase):
 
 #%% Main code
 if __name__ == "__main__":
-
-    #unet = UNet(input_shape=(128, 128, 3))
-    #print(unet.summary())
-    data = tf.random.uniform(shape=(1, 128, 128, 3))
-    block1 = Encoder().block1
-    print(block1(data).shape)
-
-    #unittest.main()
+    unittest.main()
