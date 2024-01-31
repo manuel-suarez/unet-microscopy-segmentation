@@ -139,53 +139,37 @@ class Decoder(tf.keras.layers.Layer):
 
         return x
 
+class SegmentationLayer(tf.keras.layers.Layer):
+    def __init__(self, name="segmentation", **kwargs):
+        super(SegmentationLayer, self).__init__(name=name, **kwargs)
+        self.conv = layers.Conv2D(2, kernel_size=(1, 1))
+        self.batch = layers.BatchNormalization(axis=3)
+        self.activ = layers.Activation('sigmoid')
+
+    def call(self, inputs):
+        outputs = self.conv(inputs)
+        outputs = self.batch(outputs)
+        outputs = self.activ(outputs)
+
+        return outputs
+
 #%% Define networks architectures
 class UNet(tf.keras.Model):
     def __init__(self, input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True):
-        '''
-
-
-        Parameters
-        ----------
-        input_shape : TYPE
-            DESCRIPTION.
-        NUM_CLASSES : TYPE, optional
-            DESCRIPTION. The default is 1.
-        dropout_rate : TYPE, optional
-            DESCRIPTION. The default is 0.0.
-        batch_norm : TYPE, optional
-            DESCRIPTION. The default is True.
-
-        Returns Keras Model
-        -------
-        None.
-
-        '''
         super(UNet, self).__init__()
         # Input layer
-        inputs = layers.Input(input_shape, dtype=tf.float32)
-        # Encoder layers
-        # Default unet structure + batch_norm + dropout
-
-        # Encoder Block 1
-        # Encoder Block 2
-        # Encoder Block 3
-        # Encoder Block 4
-        # Encoder Block 5 (Bottleneck)
-        # Decoder layers (Upsampling)
-        # Decoder Layer 4
-        # Decoder Layer 3
-        # Decoder Layer 2
-        # Decoder Layer 1
-
+        self.inputs = layers.Input(input_shape, dtype=tf.float32)
+        # Encoder layer
+        self.encoder = Encoder(batch_norm=batch_norm, dropout_rate=dropout_rate)
+        # Decoder layer
+        self.decoder = Decoder(batch_norm=batch_norm, dropout_rate=dropout_rate)
         # Segmentation Block (1*1 convolutional layer)
-        outputs = layers.Conv2D(2, kernel_size=(1,1))(upblock1_relu2)
-        outputs = layers.BatchNormalization(axis=3)(outputs)
-        outputs = layers.Activation('sigmoid')(outputs)
+        self.segmentation = SegmentationLayer()
 
-        # Model
-        model = models.Model(inputs, outputs, name="UNet")
-        return model
+    def call(self, inputs, **kwargs):
+        x = self.encoder(inputs)
+        x = self.decoder(x)
+        return self.segmentation(x)
 
 #%% Define unit tests
 class TestEncoder(unittest.TestCase):
