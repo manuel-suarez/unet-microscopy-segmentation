@@ -295,9 +295,9 @@ class TestEncoder(unittest.TestCase):
 class TestDecoder(unittest.TestCase):
     def test_upblock4(self):
         input = tf.random.uniform((1, 8, 8, 1024))
-        skip = tf.random.uniform((1, 8, 8, 512))
+        skip = tf.random.uniform((1, 16, 16, 512))
         model = Decoder().upblock4
-        self.assertEqual((1, 8, 8, 512), model([input, skip]).shape)
+        self.assertEqual((1, 16, 16, 512), model([input, skip]).shape)
 
 class TestUNet(unittest.TestCase):
     def test_unet(self):
