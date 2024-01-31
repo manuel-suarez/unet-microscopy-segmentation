@@ -32,17 +32,17 @@ def dice_loss(y_true, y_pred):
     return - dice_coef(y_true, y_pred)
 
 #%% Define auxiliary blocks
-class Block1(tf.keras.layers.Layer):
-    def __init__(self, name="encoder_block1", batch_norm=True, dropout_rate=0, **kwargs):
-        super(Block1, self).__init__(name=name, **kwargs)
+class EncoderBlock(tf.keras.layers.Layer):
+    def __init__(self, name, filters, batch_norm=True, dropout_rate=0, **kwargs):
+        super(EncoderBlock, self).__init__(name=name, **kwargs)
         # Parameters
         self.batch_norm = batch_norm
         self.dropout_rate = dropout_rate
         # Layers
-        self.block1_conv1 = layers.Conv2D(64, (3, 3), padding="same")
+        self.block1_conv1 = layers.Conv2D(filters, (3, 3), padding="same")
         self.batch_norm1  = layers.BatchNormalization(axis=3)
         self.block1_relu1 = layers.Activation("relu")
-        self.block1_conv2 = layers.Conv2D(64, (3, 3), padding="same")
+        self.block1_conv2 = layers.Conv2D(filters, (3, 3), padding="same")
         self.batch_norm2  = layers.BatchNormalization(axis=3)
         self.block1_relu2 = layers.Activation("relu")
         self.block1_drop  = layers.Dropout(dropout_rate)
@@ -67,7 +67,8 @@ class Encoder(tf.keras.layers.Layer):
     def __init__(self, name="encoder", batch_norm=True, dropout_rate=0, **kwargs):
         super(Encoder, self).__init__(name=name, **kwargs)
         # Blocks
-        self.block1 = Block1(batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.block1 = EncoderBlock("encoder_block1", filters=64, batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.block2 = EncoderBlock("encoder_block2", filters=128, batch_norm=batch_norm, dropout_rate=dropout_rate)
 
     def call(self, inputs):
         x = self.block1(inputs)
@@ -238,6 +239,11 @@ class TestEncoder(unittest.TestCase):
         model = Encoder().block1
         self.assertEqual(model(input).shape, (1, 128, 128, 64))
 
+    def test_block2(self):
+        input = tf.random.uniform((1, 64, 64, 64))
+        model = Encoder().block2
+        self.assertEqual(model(input).shape, (1, 64, 64, 128))
+
 class TestUNet(unittest.TestCase):
     def test_unet(self):
         data = tf.random.uniform((1, 128, 128, 3))
@@ -246,9 +252,11 @@ class TestUNet(unittest.TestCase):
 
 #%% Main code
 if __name__ == "__main__":
-    unet = UNet(input_shape=(128, 128, 3))
-    print(unet.summary())
-    test = tf.random.uniform(shape=(1, 128, 128, 3))
-    print(unet(test).shape)
 
-    unittest.main()
+    #unet = UNet(input_shape=(128, 128, 3))
+    #print(unet.summary())
+    data = tf.random.uniform(shape=(1, 128, 128, 3))
+    block1 = Encoder().block1
+    print(block1(data).shape)
+
+    #unittest.main()
