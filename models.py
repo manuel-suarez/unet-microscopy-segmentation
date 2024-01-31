@@ -72,11 +72,11 @@ class DecoderUpBlock(tf.keras.layers.Layer):
         # Layers
         self.upsample = layers.UpSampling2D(size=(2, 2), data_format="channels_last")
         # concatenation
-        self.upblock4_conv1 = layers.Conv2D(512, (3, 3), padding="same")
+        self.upblock4_conv1 = layers.Conv2D(filters, (3, 3), padding="same")
         self.batch_norm1 = layers.BatchNormalization(axis=3)
         self.upblock4_relu1 = layers.Activation("relu")
 
-        self.upblock4_conv2 = layers.Conv2D(512, (3, 3), padding="same")
+        self.upblock4_conv2 = layers.Conv2D(filters, (3, 3), padding="same")
         self.batch_norm2 = layers.BatchNormalization(axis=3)
         self.upblock4_relu2 = layers.Activation("relu")
 
@@ -113,13 +113,13 @@ class Encoder(tf.keras.layers.Layer):
         self.pool   = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))
 
     def call(self, inputs):
-        x = self.block1(inputs)
-        x = self.block2(self.pool(x))
-        x = self.block3(self.pool(x))
-        x = self.block4(self.pool(x))
-        x = self.block5(self.pool(x))
+        x1 = self.block1(inputs)
+        x2 = self.block2(self.pool(x1))
+        x3 = self.block3(self.pool(x2))
+        x4 = self.block4(self.pool(x3))
+        x5 = self.block5(self.pool(x4))
 
-        return x
+        return x5, [x1, x2, x3, x4]
 
 class Decoder(tf.keras.layers.Layer):
     def __init__(self, name="decoder", batch_norm=True, dropout_rate=0, **kwargs):
@@ -173,67 +173,10 @@ class UNet(tf.keras.Model):
         # Encoder Block 4
         # Encoder Block 5 (Bottleneck)
         # Decoder layers (Upsampling)
-
         # Decoder Layer 4
-        upblock4_upsample = layers.UpSampling2D(size=(2,2), data_format="channels_last")(block5_relu2)
-        upblock4_concat = layers.concatenate([upblock4_upsample, block4_relu2])
-        upblock4_conv1 = layers.Conv2D(512, (3, 3), padding="same")(upblock4_concat)
-        if batch_norm:
-            upblock4_conv1 = layers.BatchNormalization(axis=3)(upblock4_conv1)
-        upblock4_relu1 = layers.Activation("relu")(upblock4_conv1)
-
-        upblock4_conv2 = layers.Conv2D(512, (3, 3), padding="same")(upblock4_relu1)
-        if batch_norm:
-            upblock4_conv2 = layers.BatchNormalization(axis=3)(upblock4_conv2)
-        upblock4_relu2 = layers.Activation("relu")(upblock4_conv2)
-
-        if dropout_rate > 0:
-            upblock4_relu2 = layers.Dropout(dropout_rate)(upblock4_relu2)
         # Decoder Layer 3
-        upblock3_upsample = layers.UpSampling2D(size=(2,2), data_format="channels_last")(upblock4_relu2)
-        upblock3_concat = layers.concatenate([upblock3_upsample, block3_relu2])
-        upblock3_conv1 = layers.Conv2D(256, (3, 3), padding="same")(upblock3_concat)
-        if batch_norm:
-            upblock3_conv1 = layers.BatchNormalization(axis=3)(upblock3_conv1)
-        upblock3_relu1 = layers.Activation("relu")(upblock3_conv1)
-
-        upblock3_conv2 = layers.Conv2D(256, (3, 3), padding="same")(upblock3_relu1)
-        if batch_norm:
-            upblock3_conv2 = layers.BatchNormalization(axis=3)(upblock3_conv2)
-        upblock3_relu2 = layers.Activation("relu")(upblock3_conv2)
-
-        if dropout_rate > 0:
-            upblock3_relu2 = layers.Dropout(dropout_rate)(upblock3_relu2)
         # Decoder Layer 2
-        upblock2_upsample = layers.UpSampling2D(size=(2,2), data_format="channels_last")(upblock3_relu2)
-        upblock2_concat = layers.concatenate([upblock2_upsample, block2_relu2])
-        upblock2_conv1 = layers.Conv2D(128, (3, 3), padding="same")(upblock2_concat)
-        if batch_norm:
-            upblock2_conv1 = layers.BatchNormalization(axis=3)(upblock2_conv1)
-        upblock2_relu1 = layers.Activation("relu")(upblock2_conv1)
-
-        upblock2_conv2 = layers.Conv2D(128, (3, 3), padding="same")(upblock2_relu1)
-        if batch_norm:
-            upblock2_conv2 = layers.BatchNormalization(axis=3)(upblock2_conv2)
-        upblock2_relu2 = layers.Activation("relu")(upblock2_conv2)
-
-        if dropout_rate > 0:
-            upblock2_relu2 = layers.Dropout(dropout_rate)(upblock2_relu2)
         # Decoder Layer 1
-        upblock1_upsample = layers.UpSampling2D(size=(2,2), data_format="channels_last")(upblock2_relu2)
-        upblock1_concat = layers.concatenate([upblock1_upsample, block1_relu2])
-        upblock1_conv1 = layers.Conv2D(64, (3, 3), padding="same")(upblock1_concat)
-        if batch_norm:
-            upblock2_conv1 = layers.BatchNormalization(axis=3)(upblock1_conv1)
-        upblock1_relu1 = layers.Activation("relu")(upblock1_conv1)
-
-        upblock1_conv2 = layers.Conv2D(64, (3, 3), padding="same")(upblock1_relu1)
-        if batch_norm:
-            upblock1_conv2 = layers.BatchNormalization(axis=3)(upblock1_conv2)
-        upblock1_relu2 = layers.Activation("relu")(upblock1_conv2)
-
-        if dropout_rate > 0:
-            upblock1_relu2 = layers.Dropout(dropout_rate)(upblock1_relu2)
 
         # Segmentation Block (1*1 convolutional layer)
         outputs = layers.Conv2D(2, kernel_size=(1,1))(upblock1_relu2)
@@ -289,8 +232,13 @@ class TestEncoder(unittest.TestCase):
     def test_encoder(self):
         input = tf.random.uniform((1, 128, 128, 3))
         model = Encoder()
-        output = model(input)
-        self.assertEqual((1, 8, 8, 1024), output.shape)
+        output, skips = model(input)
+        self.assertEqual(4, len(skips))
+        self.assertEqual((1, 128, 128,   64), skips[0].shape)
+        self.assertEqual((1,  64,  64,  128), skips[1].shape)
+        self.assertEqual((1,  32,  32,  256), skips[2].shape)
+        self.assertEqual((1,  16,  16,  512), skips[3].shape)
+        self.assertEqual((1,   8,   8, 1024), output.shape)
 
 class TestDecoder(unittest.TestCase):
     def test_upblock4(self):
@@ -298,6 +246,46 @@ class TestDecoder(unittest.TestCase):
         skip = tf.random.uniform((1, 16, 16, 512))
         model = Decoder().upblock4
         self.assertEqual((1, 16, 16, 512), model([input, skip]).shape)
+
+    def test_upblock3(self):
+        input = tf.random.uniform((1, 16, 16, 512))
+        skip = tf.random.uniform((1, 32, 32, 256))
+        model = Decoder().upblock3
+        self.assertEqual((1, 32, 32, 256), model([input, skip]).shape)
+
+    def test_upblock2(self):
+        input = tf.random.uniform((1, 32, 32, 256))
+        skip = tf.random.uniform((1, 64, 64, 128))
+        model = Decoder().upblock2
+        self.assertEqual((1, 64, 64, 128), model([input, skip]).shape)
+
+    def test_upblock1(self):
+        input = tf.random.uniform((1, 64, 64, 128))
+        skip = tf.random.uniform((1, 128, 128, 64))
+        model = Decoder().upblock1
+        self.assertEqual((1, 128, 128, 64), model([input, skip]).shape)
+
+    def test_blocks(self):
+        inputs = tf.random.uniform((1, 128, 128, 3))
+        encoder = Encoder()
+        outputs, skips = encoder(inputs)
+        decoder = Decoder()
+        output1 = decoder.upblock4([outputs, skips[3]])
+        self.assertEqual((1, 16, 16, 512), output1.shape)
+        output2 = decoder.upblock3([output1, skips[2]])
+        self.assertEqual((1, 32, 32, 256), output2.shape)
+        output3 = decoder.upblock2([output2, skips[1]])
+        self.assertEqual((1, 64, 64, 128), output3.shape)
+        output4 = decoder.upblock1([output3, skips[0]])
+        self.assertEqual((1, 128, 128, 64), output4.shape)
+
+    def test_decoder(self):
+        inputs = tf.random.uniform((1, 128, 128, 3))
+        encoder = Encoder()
+        encoder_outputs = encoder(inputs)
+        decoder = Decoder()
+        decoder_outputs = decoder(encoder_outputs)
+        self.assertEqual((1, 128, 128, 64), decoder_outputs.shape)
 
 class TestUNet(unittest.TestCase):
     def test_unet(self):
