@@ -72,13 +72,14 @@ class Encoder(tf.keras.layers.Layer):
         self.block3 = EncoderBlock("encoder_block3", filters=256, batch_norm=batch_norm, dropout_rate=dropout_rate)
         self.block4 = EncoderBlock("encoder_block4", filters=512, batch_norm=batch_norm, dropout_rate=dropout_rate)
         self.block5 = EncoderBlock("encoder_block5", filters=1024, batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.pool   = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))
 
     def call(self, inputs):
         x = self.block1(inputs)
-        x = self.block2(inputs)
-        x = self.block3(inputs)
-        x = self.block4(inputs)
-        x = self.block5(inputs)
+        x = self.block2(self.pool(x))
+        x = self.block3(self.pool(x))
+        x = self.block4(self.pool(x))
+        x = self.block5(self.pool(x))
 
         return x
 
@@ -214,6 +215,26 @@ class TestEncoder(unittest.TestCase):
         model = Encoder().block5
         self.assertEqual((1, 8, 8, 1024), model(input).shape)
 
+    def test_blocks(self):
+        input = tf.random.uniform((1, 128, 128, 3))
+        maxpool = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))
+        model = Encoder()
+        output1 = model.block1(input)
+        self.assertEqual((1, 128, 128, 64), output1.shape)
+        output2 = model.block2(maxpool(output1))
+        self.assertEqual((1, 64, 64, 128), output2.shape)
+        output3 = model.block3(maxpool(output2))
+        self.assertEqual((1, 32, 32, 256), output3.shape)
+        output4 = model.block4(maxpool(output3))
+        self.assertEqual((1, 16, 16, 512), output4.shape)
+        output5 = model.block5(maxpool(output4))
+        self.assertEqual((1, 8, 8, 1024), output5.shape)
+
+    def test_encoder(self):
+        input = tf.random.uniform((1, 128, 128, 3))
+        model = Encoder()
+        output = model(input)
+        self.assertEqual((1, 8, 8, 1024), output.shape)
 
 class TestUNet(unittest.TestCase):
     def test_unet(self):
