@@ -63,6 +63,44 @@ class EncoderBlock(tf.keras.layers.Layer):
 
         return x
 
+class DecoderUpBlock(tf.keras.layers.Layer):
+    def __init__(self, name, filters, batch_norm=True, dropout_rate=0, **kwargs):
+        super(DecoderUpBlock, self).__init__(name=name, **kwargs)
+        # Parameters
+        self.batch_norm = batch_norm
+        self.dropout_rate = dropout_rate
+        # Layers
+        self.upsample = layers.UpSampling2D(size=(2, 2), data_format="channels_last")
+        # concatenation
+        self.upblock4_conv1 = layers.Conv2D(512, (3, 3), padding="same")
+        self.batch_norm1 = layers.BatchNormalization(axis=3)
+        self.upblock4_relu1 = layers.Activation("relu")
+
+        self.upblock4_conv2 = layers.Conv2D(512, (3, 3), padding="same")
+        self.batch_norm2 = layers.BatchNormalization(axis=3)
+        self.upblock4_relu2 = layers.Activation("relu")
+
+        self.upblock4_dropout = layers.Dropout(dropout_rate)
+
+    def call(self, inputs):
+        x, skips = inputs
+        x = self.upsample(x)
+        x = layers.concatenate([x, skips])
+        x = self.upblock4_conv1(x)
+        if self.batch_norm:
+            x = self.batch_norm1(x)
+        x = self.upblock4_relu1(x)
+
+        x = self.upblock4_conv2(x)
+        if self.batch_norm:
+            x = self.batch_norm2(x)
+        x = self.upblock4_relu2(x)
+
+        if self.dropout_rate > 0:
+            x = self.upblock4_dropout(x)
+
+        return x
+
 class Encoder(tf.keras.layers.Layer):
     def __init__(self, name="encoder", batch_norm=True, dropout_rate=0, **kwargs):
         super(Encoder, self).__init__(name=name, **kwargs)
@@ -80,6 +118,24 @@ class Encoder(tf.keras.layers.Layer):
         x = self.block3(self.pool(x))
         x = self.block4(self.pool(x))
         x = self.block5(self.pool(x))
+
+        return x
+
+class Decoder(tf.keras.layers.Layer):
+    def __init__(self, name="decoder", batch_norm=True, dropout_rate=0, **kwargs):
+        super(Decoder, self).__init__(name=name, **kwargs)
+        # Blocks
+        self.upblock4 = DecoderUpBlock("decoder_upblock4", filters=512, batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.upblock3 = DecoderUpBlock("decoder_upblock3", filters=256, batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.upblock2 = DecoderUpBlock("decoder_upblock2", filters=128, batch_norm=batch_norm, dropout_rate=dropout_rate)
+        self.upblock1 = DecoderUpBlock("decoder_upblock1", filters=64, batch_norm=batch_norm, dropout_rate=dropout_rate)
+
+    def call(self, inputs):
+        x, skips = inputs
+        x = self.upblock4([x, skips[3]])
+        x = self.upblock3([x, skips[2]])
+        x = self.upblock2([x, skips[1]])
+        x = self.upblock1([x, skips[0]])
 
         return x
 
@@ -235,6 +291,13 @@ class TestEncoder(unittest.TestCase):
         model = Encoder()
         output = model(input)
         self.assertEqual((1, 8, 8, 1024), output.shape)
+
+class TestDecoder(unittest.TestCase):
+    def test_upblock4(self):
+        input = tf.random.uniform((1, 8, 8, 1024))
+        skip = tf.random.uniform((1, 8, 8, 512))
+        model = Decoder().upblock4
+        self.assertEqual((1, 8, 8, 512), model([input, skip]).shape)
 
 class TestUNet(unittest.TestCase):
     def test_unet(self):
