@@ -115,7 +115,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig(os.path.join(plots_dir, f"{model_name}_loss.png"))
+    plt.savefig(os.path.join(plots_dir, f"{fname}_loss.png"))
     plt.close()
 
     # acc = history.history['jacard_coef']
@@ -130,7 +130,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     plt.xlabel('Epochs')
     plt.ylabel('Jacard')
     plt.legend()
-    plt.savefig(os.path.join(plots_dir, f"{model_name}_accuracy.png"))
+    plt.savefig(os.path.join(plots_dir, f"{fname}_accuracy.png"))
     plt.close()
 
     # Save segmentation results
@@ -158,7 +158,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     plt.title('Prediction on test image')
     plt.imshow(prediction, cmap='gray')
 
-    plt.savefig(os.path.join(figures_dir, f"{model_name}_prediction.png"))
+    plt.savefig(os.path.join(figures_dir, f"{fname}_prediction.png"))
     plt.close()
 
     # IoU for a single image
