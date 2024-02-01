@@ -5,6 +5,7 @@ Mitochondria semantic segmentation using U-net, Attention Unet and Att Res Unet
 import os
 import cv2
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tqdm import tqdm
 from PIL import Image
@@ -16,9 +17,17 @@ home_dir = os.path.expanduser('~')
 base_dir = os.path.join(home_dir, 'data')
 work_dir = os.path.join(base_dir, 'microscopy-dataset')
 train_dir = os.path.join(work_dir, 'training')
+results_dir = os.path.join(work_dir, 'results')
 
 image_dir = os.path.join(train_dir, 'images')
 mask_dir = os.path.join(train_dir, 'masks')
+figures_dir = os.path.join(results_dir, 'figures')
+weights_dir = os.path.join(results_dir, 'weights')
+metrics_dir = os.path.join(results_dir, 'metrics')
+plots_dir = os.path.join(results_dir, 'plots')
+for path in [figures_dir, weights_dir, metrics_dir, plots_dir]:
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 SIZE = 256
 image_dataset = []
@@ -72,117 +81,61 @@ from focal_loss import BinaryFocalLoss
 #from models.functional.unet import UNet
 from models.implementations.models_v1 import UNet, Attention_UNet, Attention_ResUNet
 
-'''
-UNet
-'''
-unet_model = UNet(input_shape)
-unet_model.compile(optimizer=Adam(learning_rate=1e-2), loss=BinaryFocalLoss(gamma=2),
-                   metrics=['accuracy'])
-print(unet_model.summary())
+def train_model(model, optimizer, loss, metrics, epochs, model_name):
+    print(model.summary())
+    model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
-start1 = datetime.now()
-unet_history = unet_model.fit(X_train, y_train,
-                              verbose=1,
-                              batch_size=batch_size,
-                              validation_data=(X_test, y_test),
-                              shuffle=False,
-                              epochs=5)
-stop1 = datetime.now()
-# Execution time of the model
-execution_time_Unet = stop1-start1
-print("UNet execution time is: ", execution_time_Unet)
+    start1 = datetime.now()
+    model_history = model.fit(X_train, y_train,
+                                  verbose=1,
+                                  batch_size=batch_size,
+                                  validation_data=(X_test, y_test),
+                                  shuffle=False,
+                                  epochs=epochs)
+    stop1 = datetime.now()
+    # Execution time of the model
+    execution_time_Unet = stop1 - start1
+    print(f"{model_name} execution time is: ", execution_time_Unet)
 
-# Save weights
-unet_model.save('results/mitochondria_UNet_50epochs_B_focal.hdf5')
-
-'''
-Attention UNet
-'''
-att_unet_model = Attention_UNet(input_shape)
-att_unet_model.compile(optimizer=Adam(lr = 1e-2), loss=BinaryFocalLoss(gamma=2),
-                       metrics=['accuracy'])
-print(att_unet_model.summary())
-start2 = datetime.now()
-att_unet_history = att_unet_model.fit(X_train, y_train,
-                                      verbose=1,
-                                      batch_size=batch_size,
-                                      validation_data=(X_test, y_test),
-                                      shuffle=False,
-                                      epochs=5)
-stop2 = datetime.now()
-# Execution time of the model
-execution_time_att_unet = stop2-start2
-print("Attention UNet execution time is: ", execution_time_att_unet)
-att_unet_model.save('results/mitochondria_Attention_UNet_50epochs_B_focal.hdf5')
-
-''' 
-Attention Residual Unet
-'''
-att_res_unet_model = Attention_ResUNet(input_shape)
-att_res_unet_model.compile(optimizer=Adam(lr = 1e-2), loss=BinaryFocalLoss(gamma=2),
-                           metrics=['accuracy'])
-print(att_res_unet_model.summary())
-
-start3 = datetime.now()
-att_res_unet_history = att_res_unet_model.fit(X_train, y_train,
-                                              verbose=1,
-                                              batch_size=batch_size,
-                                              validation_data=(X_test, y_test),
-                                              shuffle=False,
-                                              epochs=5)
-stop3 = datetime.now()
-
-# Execution time of the model
-execution_time_attresunet = stop3-start3
-print("Attention ResUnet execution time is: ", execution_time_attresunet)
-
-att_res_unet_model.save('results/mitochondria_AttResUNet_50epochs_B_focal.hdf5')
-
-# Save history
-import pandas as pd
-unet_history_df = pd.DataFrame(unet_history.history)
-att_unet_history_df = pd.DataFrame(att_unet_history.history)
-att_res_unet_history_df = pd.DataFrame(att_res_unet_history.history)
-
-with open('results/unet_history_df.csv', mode='w') as f:
-    unet_history_df.to_csv(f)
-with open('att_unet_history_df.csv', mode='w') as f:
-    att_unet_history_df.to_csv(f)
-with open('att_res_unet_history_df.csv', mode='w') as f:
-    att_res_unet_history_df.to_csv(f)
-
-models_names = ['unet', 'att_unet', 'att_res_unet']
-for model_name, history in zip(models_names, [unet_history, att_unet_history, att_res_unet_history]):
-    # plot the training and validation accuracy and loss at each epoch
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    # Save model
+    fname = '-'.join(model_name.split(' '))
+    model.save(os.path.join(weights_dir, "mitochondria_{fname}_50epochs_B_focal.hdf5"))
+    # Save history
+    model_history_df = pd.DataFrame(model_history.history)
+    with open(os.path.join(metrics_dir, f"{fname}_history_df.csv", mode='w')) as f:
+        model_history_df.to_csv(f)
+    # Plot training loss and metrics
+    loss = model_history.history['loss']
+    val_loss = model_history.history['val_loss']
     epochs = range(1, len(loss) + 1)
+    plt.figure()
     plt.plot(epochs, loss, 'y', label='Training loss')
     plt.plot(epochs, val_loss, 'r', label='Validation loss')
     plt.title('Training and validation loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig(f"{model_name}_loss.png")
+    plt.savefig(os.path.join(plots_dir, f"{model_name}_loss.png"))
+    plt.close()
 
-    #acc = history.history['jacard_coef']
-    acc = history.history['accuracy']
-    #val_acc = history.history['val_jacard_coef']
-    val_acc = history.history['val_accuracy']
+    # acc = history.history['jacard_coef']
+    acc = model_history.history['accuracy']
+    # val_acc = history.history['val_jacard_coef']
+    val_acc = model_history.history['val_accuracy']
 
+    plt.figure()
     plt.plot(epochs, acc, 'y', label='Training Accuracy')
     plt.plot(epochs, val_acc, 'r', label='Validation Accuracy')
     plt.title('Training and validation Accuracy')
     plt.xlabel('Epochs')
     plt.ylabel('Jacard')
     plt.legend()
-    plt.savefig(f"{model_name}_accuracy.png")
+    plt.savefig(os.path.join(plots_dir, f"{model_name}_accuracy.png"))
+    plt.close()
 
-models_paths = ['results/mitochondria_UNet_50epochs_B_focal.hdf5',
-                'results/mitochondria_Attention_UNet_50epochs_B_focal.hdf5',
-                'results/mitochondria_AttResUNet_50epochs_B_focal.hdf5']
-for model_name, model_path in zip(models_names, models_paths):
+    # Save segmentation results
     # Load one model at a time for testing.
+    model_path = os.path.join(weights_dir, "mitochondria_{fname}_50epochs_B_focal.hdf5")
     model = tf.keras.models.load_model(model_path, compile=False)
 
     import random
@@ -205,7 +158,8 @@ for model_name, model_path in zip(models_names, models_paths):
     plt.title('Prediction on test image')
     plt.imshow(prediction, cmap='gray')
 
-    plt.savefig(f"{model_name}_prediction.png")
+    plt.savefig(os.path.join(figures_dir, f"{model_name}_prediction.png"))
+    plt.close()
 
     # IoU for a single image
     from tensorflow.keras.metrics import MeanIoU
@@ -216,7 +170,6 @@ for model_name, model_path in zip(models_names, models_paths):
     print("Mean IoU =", IOU_keras.result().numpy())
 
     # Calculate IoU for all test images and average
-
     import pandas as pd
 
     IoU_values = []
@@ -237,3 +190,17 @@ for model_name, model_path in zip(models_names, models_paths):
     df = df[df.IoU != 1.0]
     mean_IoU = df.mean().values
     print("Mean IoU is: ", mean_IoU)
+
+if __name__ == '__main__':
+    unet_model = UNet(input_shape)
+    att_unet_model = Attention_UNet(input_shape)
+    att_res_unet_model = Attention_ResUNet(input_shape)
+    models = [unet_model, att_unet_model, att_res_unet_model]
+    names = ['UNet', 'Attention UNet', 'Attention Residual Unet']
+    for model, name in zip(models, names):
+        train_model(model,
+                    optimizer=Adam(learning_rate=1e-2),
+                    loss=BinaryFocalLoss(gamma=2),
+                    metrics=['accuracy'],
+                    epochs=5,
+                    model_name=name)
