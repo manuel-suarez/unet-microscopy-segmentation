@@ -99,7 +99,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
 
     # Save model
     fname = '-'.join(model_name.split(' '))
-    model.save(os.path.join(weights_dir, "mitochondria_{fname}_50epochs_B_focal.hdf5"))
+    model.save(os.path.join(weights_dir, f"mitochondria_{fname}_50epochs_B_focal.hdf5"))
     # Save history
     model_history_df = DataFrame(model_history.history)
     with open(os.path.join(metrics_dir, f"{fname}_history_df.csv"), mode='w') as f:
@@ -135,7 +135,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
 
     # Save segmentation results
     # Load one model at a time for testing.
-    model_path = os.path.join(weights_dir, "mitochondria_{fname}_50epochs_B_focal.hdf5")
+    model_path = os.path.join(weights_dir, f"mitochondria_{fname}_50epochs_B_focal.hdf5")
     model = tf.keras.models.load_model(model_path, compile=False)
 
     import random
