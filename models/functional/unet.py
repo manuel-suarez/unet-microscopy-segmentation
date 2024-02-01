@@ -25,6 +25,7 @@ def encoder_block(input, filters, batch_norm=False, dropout_rate=0.0):
 def decoder_block(input, skip, filters, batch_norm=False, dropout_rate=0.0):
     # Upsampling
     upsample = layers.UpSampling2D(size=(2, 2), data_format="channels_last")(input)
+    # TODO test concatenation with axis=3
     concat = layers.concatenate([upsample, skip])
     conv = convolutional_block(concat, filters, batch_norm)
     if dropout_rate > 0:
