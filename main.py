@@ -163,7 +163,7 @@ for model_name, history in zip(models_names, [unet_history, att_unet_history, at
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig(f"{model}_loss.png")
+    plt.savefig(f"{model_name}_loss.png")
 
     #acc = history.history['jacard_coef']
     acc = history.history['accuracy']
