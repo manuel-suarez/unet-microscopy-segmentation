@@ -104,7 +104,7 @@ att_unet_model.compile(optimizer=Adam(lr = 1e-2), loss=BinaryFocalLoss(gamma=2),
 print(att_unet_model.summary())
 start2 = datetime.now()
 att_unet_history = att_unet_model.fit(X_train, y_train,
-                                      varbose=1,
+                                      verbose=1,
                                       batch_size=batch_size,
                                       validation_data=(X_test, y_test),
                                       shuffle=False,
