@@ -202,5 +202,5 @@ if __name__ == '__main__':
                     optimizer=Adam(learning_rate=1e-2),
                     loss=BinaryFocalLoss(gamma=2),
                     metrics=['accuracy'],
-                    epochs=1,
+                    epochs=50,
                     model_name=name)
