@@ -67,7 +67,7 @@ batch_size = 8
 # Use library implementation
 from focal_loss import BinaryFocalLoss
 
-from models.unet import UNet
+from models.functional.unet import UNet
 
 unet_model = UNet(input_shape)
 unet_model.compile(optimizer=Adam(learning_rate=1e-2), loss=BinaryFocalLoss(gamma=2),
