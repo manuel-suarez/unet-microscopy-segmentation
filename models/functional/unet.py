@@ -48,7 +48,7 @@ def UNet(input_shape=(256, 256, 1), batch_norm=True, dropout_rate=0.0):
     block5 = encoder_block(pool4, 1024, batch_norm, dropout_rate)
     # Decoder path
     upblock4 = decoder_block(block5, block4, 512, batch_norm, dropout_rate)
-    upblock3 = decoder_block(upblock4, block3, 236, batch_norm, dropout_rate)
+    upblock3 = decoder_block(upblock4, block3, 256, batch_norm, dropout_rate)
     upblock2 = decoder_block(upblock3, block2, 128, batch_norm, dropout_rate)
     upblock1 = decoder_block(upblock2, block1, 64, batch_norm, dropout_rate)
     # Classification layer
