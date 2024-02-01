@@ -5,8 +5,8 @@ Mitochondria semantic segmentation using U-net, Attention Unet and Att Res Unet
 import os
 import cv2
 import numpy as np
-import pandas as pd
 import tensorflow as tf
+from pandas import DataFrame
 from tqdm import tqdm
 from PIL import Image
 from datetime import datetime
@@ -101,7 +101,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     fname = '-'.join(model_name.split(' '))
     model.save(os.path.join(weights_dir, "mitochondria_{fname}_50epochs_B_focal.hdf5"))
     # Save history
-    model_history_df = pd.DataFrame(model_history.history)
+    model_history_df = DataFrame(model_history.history)
     with open(os.path.join(metrics_dir, f"{fname}_history_df.csv", mode='w')) as f:
         model_history_df.to_csv(f)
     # Plot training loss and metrics
