@@ -102,7 +102,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     model.save(os.path.join(weights_dir, "mitochondria_{fname}_50epochs_B_focal.hdf5"))
     # Save history
     model_history_df = DataFrame(model_history.history)
-    with open(os.path.join(metrics_dir, f"{fname}_history_df.csv", mode='w')) as f:
+    with open(os.path.join(metrics_dir, f"{fname}_history_df.csv"), mode='w') as f:
         model_history_df.to_csv(f)
     # Plot training loss and metrics
     loss = model_history.history['loss']
