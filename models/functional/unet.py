@@ -33,7 +33,7 @@ def decoder_block(input, skip, filters, batch_norm=False, dropout_rate=0.0):
 
     return conv
 
-def UNet(input_shape=(256, 256, 3), batch_norm=True, dropout_rate=0.0):
+def UNet(input_shape=(256, 256, 1), batch_norm=True, dropout_rate=0.0):
     inputs = layers.Input(input_shape)
     # Encoder path
     block1 = encoder_block(inputs, 64, batch_norm, dropout_rate)
@@ -52,7 +52,7 @@ def UNet(input_shape=(256, 256, 3), batch_norm=True, dropout_rate=0.0):
     upblock2 = decoder_block(upblock3, block2, 128, batch_norm, dropout_rate)
     upblock1 = decoder_block(upblock2, block1, 64, batch_norm, dropout_rate)
     # Classification layer
-    outputs = layers.Conv2D(2, kernel_size=(1,1))(upblock1)
+    outputs = layers.Conv2D(1, kernel_size=(1,1))(upblock1)
     outputs = layers.BatchNormalization(axis=3)(outputs)
     outputs = layers.Activation('sigmoid')(outputs)
 
