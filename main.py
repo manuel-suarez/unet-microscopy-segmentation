@@ -86,4 +86,11 @@ stop1 = datetime.now()
 execution_time_Unet = stop1-start1
 print("UNet execution time is: ", execution_time_Unet)
 
-unet_model.save('mitochondria_UNet_50epochs_B_focal.hdf5')
+# Save weights
+unet_model.save_weights('results/mitochondria_UNet_50epochs_B_focal.hdf5')
+
+# Save history
+import pandas as pd
+unet_history_df = pd.DataFrame(unet_history.history)
+with open('results/unet_history_df.csv', mode='w') as f:
+    unet_history_df.to_csv(f)
