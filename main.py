@@ -64,6 +64,7 @@ IMG_CHANNELS = X_train.shape[3]
 num_labels = 1
 input_shape = (IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS)
 batch_size = 8
+num_epochs = 5
 
 # Use library implementation
 from focal_loss import BinaryFocalLoss
@@ -85,7 +86,7 @@ unet_history = unet_model.fit(X_train, y_train,
                               batch_size=batch_size,
                               validation_data=(X_test, y_test),
                               shuffle=False,
-                              epochs=50)
+                              epochs=5)
 stop1 = datetime.now()
 # Execution time of the model
 execution_time_Unet = stop1-start1
@@ -107,7 +108,7 @@ att_unet_history = att_unet_model.fit(X_train, y_train,
                                       batch_size=batch_size,
                                       validation_data=(X_test, y_test),
                                       shuffle=False,
-                                      epochs=50)
+                                      epochs=5)
 stop2 = datetime.now()
 # Execution time of the model
 execution_time_att_unet = stop2-start2
@@ -128,7 +129,7 @@ att_res_unet_history = att_res_unet_model.fit(X_train, y_train,
                                               batch_size=batch_size,
                                               validation_data=(X_test, y_test),
                                               shuffle=False,
-                                              epochs=50)
+                                              epochs=5)
 stop3 = datetime.now()
 
 # Execution time of the model
