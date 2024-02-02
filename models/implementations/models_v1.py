@@ -221,7 +221,6 @@ def UNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True):
 
     # Model
     model = models.Model(inputs, conv_final, name="UNet")
-    print(model.summary())
     return model
 
 
@@ -355,6 +354,7 @@ def Attention_ResUNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=T
     model = models.Model(inputs, conv_final, name="AttentionResUNet")
     return model
 
-
-input_shape = (256, 256, 1)
-UNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True)
+if __name__ == "__main__":
+    input_shape = (256, 256, 1)
+    model = UNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True)
+    print(model.summary())

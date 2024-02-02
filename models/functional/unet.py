@@ -58,3 +58,7 @@ def UNet(input_shape=(256, 256, 1), batch_norm=True, dropout_rate=0.0):
 
     model = keras.Model(inputs, outputs)
     return model
+
+if __name__ == '__main__':
+    model = UNet((256, 256, 1))
+    print(model.summary())
