@@ -3,12 +3,7 @@ Mitochondria semantic segmentation using U-net, Attention Unet and Att Res Unet
 """
 
 import os
-import cv2
-import numpy as np
-import tensorflow as tf
 from pandas import DataFrame
-from tqdm import tqdm
-from PIL import Image
 from datetime import datetime
 from matplotlib import pyplot as plt
 from tensorflow.keras.optimizers import Adam
@@ -33,9 +28,9 @@ seed = 24
 batch_size = 8
 
 # Parameters for model
-IMG_HEIGHT = x.shape[1]
-IMG_WIDTH = x.shape[2]
-IMG_CHANNELS = x.shape[3]
+IMG_HEIGHT = 256
+IMG_WIDTH = 256
+IMG_CHANNELS = 1
 input_shape = (IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS)
 num_epochs = 50
 
@@ -52,7 +47,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     start1 = datetime.now()
-    num_train_imgs, train_generator, val_generator = create_generators()
+    num_train_imgs, train_generator, val_generator = create_generators(data_dir, batch_size, seed)
     model_history = model.fit(train_generator,
                               verbose=1,
                               batch_size=batch_size,
