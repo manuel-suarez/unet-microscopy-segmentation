@@ -14,7 +14,7 @@ def create_datasets(image_dir, mask_dir):
     images = os.listdir(image_dir)
     for i, image_name in tqdm(enumerate(images)):
         if image_name.split('.')[1] == 'tif':
-            image = cv2.imread(os.path.join(image_dir, image_name), 1)
+            image = cv2.imread(os.path.join(image_dir, image_name), 0)
             image = Image.fromarray(image)
             image = image.resize((SIZE, SIZE))
             image_dataset.append(numpy.array(image))
