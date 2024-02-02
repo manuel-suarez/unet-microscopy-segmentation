@@ -47,12 +47,28 @@ from dataset.generators import create_generators
 from dataset.memory import create_datasets
 from dataset.sequences import Dataset, Dataloader
 
+def visualize(**images):
+    """PLot images in one row."""
+    n = len(images)
+    plt.figure(figsize=(16, 5))
+    for i, (name, image) in enumerate(images.items()):
+        plt.subplot(1, n, i + 1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.title(' '.join(name.split('_')).title())
+        plt.imshow(image)
+    plt.savefig('figure01.png')
+    plt.close()
+
 def train_model(model, optimizer, loss, metrics, epochs, model_name):
     print(model.summary())
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     # Using sequences
     train_dataset = Dataset(image_dir, mask_dir)
+    # Visualize image
+    image, mask = train_dataset[5]
+    visualize(image=image, mask=mask)
     train_dataloader = Dataloader(train_dataset, batch_size=8, shuffle=True)
     #X_train, X_test, y_train, y_test = create_datasets(image_dir, mask_dir)
     #num_train_imgs, train_generator, val_generator = create_generators(data_dir, batch_size, seed)
