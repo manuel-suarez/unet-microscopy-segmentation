@@ -26,11 +26,7 @@ class Dataset:
     def __getitem__(self, index):
         # read data
         image = cv2.imread(self.images_fps[index], 0) # Grayscale
-        image = Image.fromarray(image)
-        image = image.resize((SIZE, SIZE))
         mask = cv2.imread(self.masks_fps[index], 0)
-        mask = Image.fromarray(mask)
-        mask = mask.resize((SIZE, SIZE))
         print(image.shape, mask.shape)
 
         return image, mask
