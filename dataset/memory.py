@@ -47,7 +47,7 @@ def create_datasets(image_dir, mask_dir):
     # Parameters for model
     IMG_HEIGHT = X_train.shape[1]
     IMG_WIDTH = X_train.shape[2]
-    IMG_CHANNELS = X_train.shape[3]
+    IMG_CHANNELS = 1
     num_labels = 1
     input_shape = (IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS)
 
