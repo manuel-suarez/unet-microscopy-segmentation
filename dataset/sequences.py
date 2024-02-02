@@ -31,6 +31,7 @@ class Dataset:
         mask = cv2.imread(self.masks_fps[index], 0)
         mask = Image.fromarray(mask)
         mask = mask.resize((SIZE, SIZE))
+        print(image.shape, mask.shape)
 
         return image, mask
 
