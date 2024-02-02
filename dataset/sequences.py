@@ -2,7 +2,9 @@ import os
 import cv2
 import numpy as np
 import tensorflow as tf
+from PIL import Image
 
+SIZE = 256
 class Dataset:
     """Dataset. Read images"""
     def __init__(
@@ -24,7 +26,11 @@ class Dataset:
     def __getitem__(self, index):
         # read data
         image = cv2.imread(self.images_fps[index], 0) # Grayscale
+        image = Image.fromarray(image)
+        image = image.resize((SIZE, SIZE))
         mask = cv2.imread(self.masks_fps[index], 0)
+        mask = Image.fromarray(mask)
+        mask = mask.resize((SIZE, SIZE))
 
         return image, mask
 
