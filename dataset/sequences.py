@@ -25,8 +25,9 @@ class Dataset:
 
     def __getitem__(self, index):
         # read data
-        image = cv2.imread(self.images_fps[index], 0) # Grayscale
-        mask = cv2.imread(self.masks_fps[index], 0)
+        image = cv2.imread(self.images_fps[index], 0)/255.0 # Grayscale
+        mask = cv2.imread(self.masks_fps[index], 0)/255.0
+        mask = np.expand_dims(mask, -1)
         print(image.shape, mask.shape)
 
         return image, mask
