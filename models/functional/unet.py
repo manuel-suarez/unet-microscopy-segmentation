@@ -28,6 +28,7 @@ def decoder_block(input, skip, filters, batch_norm=False, dropout_rate=0.0):
     # TODO test concatenation with axis=3
     concat = layers.concatenate([upsample, skip], axis=3)
     conv = convolutional_block(concat, filters, batch_norm)
+    conv = convolutional_block(conv, filters, batch_norm)
     if dropout_rate > 0:
         conv = layers.Dropout(dropout_rate)(conv)
 
