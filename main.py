@@ -50,7 +50,7 @@ mask_data_gen_args = dict(rescale = 1/255.,
                           zoom_range=0.3,
                           horizontal_flip=True,
                           vertical_flip=True,
-                          fill_mode='relect',
+                          fill_mode='reflect',
                           preprocessing_function=lambda x: np.where(x>0, 1, 0).astype(x.dtype))
 image_data_generator = ImageDataGenerator(**img_data_gen_args)
 num_train_imgs = len(os.listdir(os.path.join(data_dir,'train_images','train')))
