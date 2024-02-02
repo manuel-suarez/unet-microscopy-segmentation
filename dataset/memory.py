@@ -39,7 +39,7 @@ def create_datasets(image_dir, mask_dir):
     image_number = random.randint(0, len(X_train))
     plt.figure(figsize=(12, 6))
     plt.subplot(121)
-    plt.imshow(np.reshape(X_train[image_number], (256, 256, 3)), cmap='gray')
+    plt.imshow(np.reshape(X_train[image_number], (256, 256)), cmap='gray')
     plt.subplot(122)
     plt.imshow(np.reshape(y_train[image_number], (256, 256)), cmap='gray')
     plt.show()
