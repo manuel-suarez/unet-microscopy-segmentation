@@ -43,8 +43,8 @@ class Dataloader(tf.keras.utils.Sequence):
 
     def __getitem__(self, index):
         # collect batch data
-        start = i * self.batch_size
-        stop = (i + 1) * self.batch_size
+        start = index * self.batch_size
+        stop = (index + 1) * self.batch_size
         data = []
         for j in range(start, stop):
             data.append(self.dataset[j])
