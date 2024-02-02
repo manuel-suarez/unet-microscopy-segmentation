@@ -79,7 +79,7 @@ num_epochs = 5
 from focal_loss import BinaryFocalLoss
 
 #from models.functional.unet import UNet
-from models.implementations.models_v1 import UNet, Attention_UNet, Attention_ResUNet, dice_coef
+from models.implementations.models_v1 import UNet, Attention_UNet, Attention_ResUNet, dice_coef, jacard_coef
 from models.functional.unet import UNet as FUnet
 
 def train_model(model, optimizer, loss, metrics, epochs, model_name):
@@ -203,6 +203,6 @@ if __name__ == '__main__':
         train_model(model,
                     optimizer=Adam(learning_rate=1e-2),
                     loss=BinaryFocalLoss(gamma=2),
-                    metrics=['accuracy', dice_coef],
+                    metrics=['accuracy', dice_coef, jacard_coef],
                     epochs=5,
                     model_name=name)
