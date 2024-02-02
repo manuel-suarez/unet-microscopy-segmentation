@@ -16,11 +16,8 @@ from tensorflow.keras.optimizers import Adam
 home_dir = os.path.expanduser('~')
 base_dir = os.path.join(home_dir, 'data')
 work_dir = os.path.join(base_dir, 'microscopy-dataset')
-train_dir = os.path.join(work_dir, 'training')
+data_dir = os.path.join(work_dir, 'segmentation')
 results_dir = os.path.join(work_dir, 'results')
-
-image_dir = os.path.join(train_dir, 'images')
-mask_dir = os.path.join(train_dir, 'masks')
 figures_dir = os.path.join(results_dir, 'figures')
 weights_dir = os.path.join(results_dir, 'weights')
 metrics_dir = os.path.join(results_dir, 'metrics')
@@ -30,50 +27,84 @@ for path in [figures_dir, weights_dir, metrics_dir, plots_dir]:
         os.makedirs(path)
 
 SIZE = 256
-image_dataset = []
-mask_dataset = []
 
-images = os.listdir(image_dir)
-for i, image_name in tqdm(enumerate(images)):
-    if image_name.split('.')[1] == 'tif':
-        image = cv2.imread(os.path.join(image_dir, image_name), 1)
-        image = Image.fromarray(image)
-        image = image.resize((SIZE, SIZE))
-        image_dataset.append(np.array(image))
+# Use image generators to load images from disk
+seed = 24
+batch_size = 8
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-masks = os.listdir(mask_dir)
-for i, image_name in tqdm(enumerate(masks)):
-    if image_name.split('.')[1] == 'tif':
-        image = cv2.imread(os.path.join(mask_dir, image_name), 0)
-        image = Image.fromarray(image)
-        image = image.resize((SIZE, SIZE))
-        mask_dataset.append(np.array(image))
+img_data_gen_args = dict(rescale = 1/255.,
+                         rotation_range=90,
+                         width_shift_range=0.3,
+                         height_shift_range=0.3,
+                         shear_range=0.5,
+                         zoom_range=0.3,
+                         horizontal_flip=True,
+                         vertical_flip=True,
+                         fill_mode='reflect')
+mask_data_gen_args = dict(rescale = 1/255.,
+                          rotation_range=90,
+                          width_shift_range=0.3,
+                          height_shift_range=0.3,
+                          shear_range=0.5,
+                          zoom_range=0.3,
+                          horizontal_flip=True,
+                          vertical_flip=True,
+                          fill_mode='relect',
+                          preprocessing_function=lambda x: np.where(x>0, 1, 0).astype(x.dtype))
+image_data_generator = ImageDataGenerator(**img_data_gen_args)
+num_train_imgs = len(os.listdir(os.path.join(data_dir,'train_images','train')))
+image_generator = image_data_generator.flow_from_directory(os.path.join(data_dir,'train_images'),
+                                                           seed=seed,
+                                                           batch_size=batch_size,
+                                                           class_mode=None) # Binary
+mask_data_generator = ImageDataGenerator(**mask_data_gen_args)
+mask_generator = mask_data_generator.flow_from_directory(os.path.join(data_dir,'train_masks'),
+                                                         seed=seed,
+                                                         batch_size=batch_size,
+                                                         color_mode='grayscale',
+                                                         class_mode=None) # Binary
 
-# Normalize images
-image_dataset = np.array(image_dataset)/255.
-mask_dataset = np.expand_dims((np.array(mask_dataset)),3)/255.
+valid_img_generator = image_data_generator.flow_from_directory(os.path.join(data_dir,'val_images'),
+                                                               seed=seed,
+                                                               batch_size=batch_size,
+                                                               class_mode=None)
+valid_mask_generator = mask_data_generator.flow_from_directory(os.path.join(data_dir,'val_masks'),
+                                                               seed=seed,
+                                                               batch_size=batch_size,
+                                                               color_mode='grayscale',
+                                                               class_mode=None)
+test_img_generator = image_data_generator.flow_from_directory(os.path.join(data_dir,'test_images'),
+                                                              seed=seed,
+                                                              batch_size=32,
+                                                              class_mode=None)
+test_mask_generator = mask_data_generator.flow_from_directory(os.path.join(data_dir,'test_masks'),
+                                                              seed=seed,
+                                                              batch_size=32,
+                                                              color_mode='grayscale',
+                                                              class_mode=None)
+train_generator = zip(image_generator, mask_generator)
+val_generator = zip(valid_img_generator, valid_mask_generator)
 
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(image_dataset, mask_dataset, test_size=0.10, random_state=0)
-
-import random
-import numpy as np
-image_number = random.randint(0, len(X_train))
-plt.figure(figsize=(12, 6))
-plt.subplot(121)
-plt.imshow(np.reshape(X_train[image_number], (256, 256, 3)), cmap='gray')
-plt.subplot(122)
-plt.imshow(np.reshape(y_train[image_number], (256, 256)), cmap='gray')
-plt.show()
+x = image_generator.next()
+y = mask_generator.next()
+for i in range(0,1):
+    image = x[i]
+    mask = y[i]
+    plt.figure()
+    plt.subplot(1,2,1)
+    plt.imshow(image[:,:,0], cmap='gray')
+    plt.subplot(1,2,2)
+    plt.imshow(mask[:,:,0])
+    plt.savefig(os.path.join(figures_dir,'figure01.png'))
+    plt.close()
 
 # Parameters for model
-IMG_HEIGHT = X_train.shape[1]
-IMG_WIDTH = X_train.shape[2]
-IMG_CHANNELS = X_train.shape[3]
-num_labels = 1
+IMG_HEIGHT = x.shape[1]
+IMG_WIDTH = x.shape[2]
+IMG_CHANNELS = x.shape[3]
 input_shape = (IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS)
-batch_size = 8
-num_epochs = 5
+num_epochs = 50
 
 # Use library implementation
 from focal_loss import BinaryFocalLoss
@@ -87,12 +118,14 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     start1 = datetime.now()
-    model_history = model.fit(X_train, y_train,
-                                  verbose=1,
-                                  batch_size=batch_size,
-                                  validation_data=(X_test, y_test),
-                                  shuffle=False,
-                                  epochs=epochs)
+    model_history = model.fit(train_generator,
+                              verbose=1,
+                              batch_size=batch_size,
+                              steps_per_epoch=num_train_imgs//batch_size,
+                              validation_data=val_generator,
+                              validation_steps=num_train_imgs//batch_size,
+                              shuffle=False,
+                              epochs=epochs)
     stop1 = datetime.now()
     # Execution time of the model
     execution_time_Unet = stop1 - start1
@@ -137,60 +170,6 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     # Save segmentation results
     # Load one model at a time for testing.
     model_path = os.path.join(weights_dir, f"mitochondria_{fname}_50epochs_B_focal.hdf5")
-    model = tf.keras.models.load_model(model_path, compile=False)
-
-    import random
-
-    test_img_number = random.randint(0, X_test.shape[0] - 1)
-    test_img = X_test[test_img_number]
-    ground_truth = y_test[test_img_number]
-
-    test_img_input = np.expand_dims(test_img, 0)
-    prediction = (model.predict(test_img_input)[0, :, :, 0] > 0.5).astype(np.uint8)
-
-    plt.figure(figsize=(16, 8))
-    plt.subplot(231)
-    plt.title('Testing Image')
-    plt.imshow(test_img, cmap='gray')
-    plt.subplot(232)
-    plt.title('Testing Label')
-    plt.imshow(ground_truth[:, :, 0], cmap='gray')
-    plt.subplot(233)
-    plt.title('Prediction on test image')
-    plt.imshow(prediction, cmap='gray')
-
-    plt.savefig(os.path.join(figures_dir, f"{fname}_prediction.png"))
-    plt.close()
-
-    # IoU for a single image
-    from tensorflow.keras.metrics import MeanIoU
-
-    n_classes = 2
-    IOU_keras = MeanIoU(num_classes=n_classes)
-    IOU_keras.update_state(ground_truth[:, :, 0], prediction)
-    print("Mean IoU =", IOU_keras.result().numpy())
-
-    # Calculate IoU for all test images and average
-    import pandas as pd
-
-    IoU_values = []
-    for img in range(0, X_test.shape[0]):
-        temp_img = X_test[img]
-        ground_truth = y_test[img]
-        temp_img_input = np.expand_dims(temp_img, 0)
-        prediction = (model.predict(temp_img_input)[0, :, :, 0] > 0.5).astype(np.uint8)
-
-        IoU = MeanIoU(num_classes=n_classes)
-        IoU.update_state(ground_truth[:, :, 0], prediction)
-        IoU = IoU.result().numpy()
-        IoU_values.append(IoU)
-
-        print(IoU)
-
-    df = pd.DataFrame(IoU_values, columns=["IoU"])
-    df = df[df.IoU != 1.0]
-    mean_IoU = df.mean().values
-    print("Mean IoU is: ", mean_IoU)
 
 if __name__ == '__main__':
     unet_model = UNet(input_shape)
