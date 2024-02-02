@@ -13,6 +13,9 @@ base_dir = os.path.join(home_dir, 'data')
 work_dir = os.path.join(base_dir, 'microscopy-dataset')
 data_dir = os.path.join(work_dir, 'segmentation')
 results_dir = os.path.join(work_dir, 'results')
+train_dir = os.path.join(work_dir, 'training')
+image_dir = os.path.join(train_dir, 'images')
+mask_dir = os.path.join(train_dir, 'masks')
 figures_dir = os.path.join(results_dir, 'figures')
 weights_dir = os.path.join(results_dir, 'weights')
 metrics_dir = os.path.join(results_dir, 'metrics')
@@ -41,21 +44,31 @@ from focal_loss import BinaryFocalLoss
 from models.implementations.models_v1 import UNet, Attention_UNet, Attention_ResUNet, dice_coef, jacard_coef
 from models.functional.unet import UNet as FUnet
 from dataset.generators import create_generators
+from dataset.memory import create_datasets
 
 def train_model(model, optimizer, loss, metrics, epochs, model_name):
     print(model.summary())
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     start1 = datetime.now()
-    num_train_imgs, train_generator, val_generator = create_generators(data_dir, batch_size, seed)
-    model_history = model.fit(train_generator,
+    X_train, X_test, y_train, y_test = create_datasets(image_dir, mask_dir)
+    #num_train_imgs, train_generator, val_generator = create_generators(data_dir, batch_size, seed)
+    # Using memory lists
+    model_history = model.fit(X_train, y_train,
                               verbose=1,
                               batch_size=batch_size,
-                              steps_per_epoch=num_train_imgs//batch_size,
-                              validation_data=val_generator,
-                              validation_steps=num_train_imgs//batch_size,
+                              validation_data=(X_test, y_test),
                               shuffle=False,
                               epochs=epochs)
+    # Using generators
+    #model_history = model.fit(train_generator,
+    #                          verbose=1,
+    #                          batch_size=batch_size,
+    #                          steps_per_epoch=num_train_imgs//batch_size,
+    #                          validation_data=val_generator,
+    #                          validation_steps=num_train_imgs//batch_size,
+    #                          shuffle=False,
+    #                          epochs=epochs)
     stop1 = datetime.now()
     # Execution time of the model
     execution_time_Unet = stop1 - start1
