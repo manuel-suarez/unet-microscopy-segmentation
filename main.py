@@ -65,19 +65,25 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     # Using sequences
-    train_dataset = Dataset(image_dir, mask_dir)
+    #train_dataset = Dataset(image_dir, mask_dir)
     # Visualize image
-    image, mask = train_dataset[5]
-    visualize(image=image, mask=mask)
-    train_dataloader = Dataloader(train_dataset, batch_size=8, shuffle=True)
-    #X_train, X_test, y_train, y_test = create_datasets(image_dir, mask_dir)
+    #image, mask = train_dataset[5]
+    #visualize(image=image, mask=mask)
+    #train_dataloader = Dataloader(train_dataset, batch_size=8, shuffle=True)
+    X_train, X_test, y_train, y_test = create_datasets(image_dir, mask_dir)
     #num_train_imgs, train_generator, val_generator = create_generators(data_dir, batch_size, seed)
     # Using memory lists
     start1 = datetime.now()
-    model_history = model.fit(train_dataloader,
+    #model_history = model.fit(train_dataloader,
+    #                          verbose=1,
+    #                          batch_size=batch_size,
+    #                          #validation_data=(X_test, y_test),
+    #                          shuffle=False,
+    #                          epochs=epochs)
+    model_history = model.fit(X_train, y_train,
                               verbose=1,
                               batch_size=batch_size,
-                              #validation_data=(X_test, y_test),
+                              validation_data=(X_test, y_test),
                               shuffle=False,
                               epochs=epochs)
     # Using generators

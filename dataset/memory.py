@@ -30,6 +30,8 @@ def create_datasets(image_dir, mask_dir):
     # Normalize images
     image_dataset = numpy.array(image_dataset)/255.
     mask_dataset = numpy.expand_dims((numpy.array(mask_dataset)),3)/255.
+    print(image_dataset.shape, mask_dataset.shape)
+    print(image_dataset[0].shape, mask_dataset[0].shape)
 
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(image_dataset, mask_dataset, test_size=0.10, random_state=0)
