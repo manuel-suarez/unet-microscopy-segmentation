@@ -45,19 +45,23 @@ from models.implementations.models_v1 import UNet, Attention_UNet, Attention_Res
 from models.functional.unet import UNet as FUnet
 from dataset.generators import create_generators
 from dataset.memory import create_datasets
+from dataset.sequences import Dataset, Dataloader
 
 def train_model(model, optimizer, loss, metrics, epochs, model_name):
     print(model.summary())
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
-    start1 = datetime.now()
-    X_train, X_test, y_train, y_test = create_datasets(image_dir, mask_dir)
+    # Using sequences
+    train_dataset = Dataset(image_dir, mask_dir)
+    train_dataloader = Dataloader(train_dataset, batch_size=8, shuffle=True)
+    #X_train, X_test, y_train, y_test = create_datasets(image_dir, mask_dir)
     #num_train_imgs, train_generator, val_generator = create_generators(data_dir, batch_size, seed)
     # Using memory lists
-    model_history = model.fit(X_train, y_train,
+    start1 = datetime.now()
+    model_history = model.fit(train_dataloader,
                               verbose=1,
                               batch_size=batch_size,
-                              validation_data=(X_test, y_test),
+                              #validation_data=(X_test, y_test),
                               shuffle=False,
                               epochs=epochs)
     # Using generators
