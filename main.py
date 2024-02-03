@@ -146,11 +146,11 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
 
 if __name__ == '__main__':
     unet_model = UNet(input_shape)
-    funet_model = FUnet(input_shape)
-    #att_unet_model = Attention_UNet(input_shape)
-    #att_res_unet_model = Attention_ResUNet(input_shape)
-    models = [unet_model, funet_model]
-    names = ['UNet', 'FUNet']
+    #funet_model = FUnet(input_shape)
+    att_unet_model = Attention_UNet(input_shape)
+    att_res_unet_model = Attention_ResUNet(input_shape)
+    models = [unet_model, att_unet_model, att_res_unet_model]
+    names = ['UNet', 'Attention UNet', 'Attention ResUNet']
     for model, name in zip(models, names):
         train_model(model,
                     optimizer=Adam(learning_rate=1e-2),
