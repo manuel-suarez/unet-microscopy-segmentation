@@ -13,9 +13,8 @@ base_dir = os.path.join(home_dir, 'data')
 work_dir = os.path.join(base_dir, 'microscopy-dataset')
 data_dir = os.path.join(work_dir, 'segmentation')
 results_dir = os.path.join(work_dir, 'results')
-train_dir = os.path.join(work_dir, 'training')
-image_dir = os.path.join(train_dir, 'images')
-mask_dir = os.path.join(train_dir, 'masks')
+train_dir = os.path.join(work_dir, 'training2', 'train')
+val_dir = os.path.join(work_dir, 'training2', 'val')
 figures_dir = os.path.join(results_dir, 'figures')
 weights_dir = os.path.join(results_dir, 'weights')
 metrics_dir = os.path.join(results_dir, 'metrics')
@@ -47,7 +46,7 @@ from dataset.generators import create_generators
 from dataset.memory import create_datasets
 from dataset.sequences import Dataset, Dataloader
 
-def visualize(**images):
+def visualize(figure_name, **images):
     """PLot images in one row."""
     n = len(images)
     plt.figure(figsize=(16, 5))
@@ -57,7 +56,7 @@ def visualize(**images):
         plt.yticks([])
         plt.title(' '.join(name.split('_')).title())
         plt.imshow(image)
-    plt.savefig('figure01.png')
+    plt.savefig(figure_name)
     plt.close()
 
 def train_model(model, optimizer, loss, metrics, epochs, model_name):
@@ -65,11 +64,15 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     # Using sequences
-    train_dataset = Dataset(image_dir, mask_dir)
+    train_dataset = Dataset(os.path.join(train_dir, 'images'), os.path.join(train_dir, 'masks'))
+    val_dataset = Dataset(os.path.join(val_dir, 'images'), os.path.join(val_dir, 'masks'))
     # Visualize image
     image, mask = train_dataset[5]
-    visualize(image=image, mask=mask)
+    visualize('train_images.png', image=image, mask=mask)
+    image, mask = val_dataset[5]
+    visualize('val_images.png', image=image, mask=mask)
     train_dataloader = Dataloader(train_dataset, batch_size=8, shuffle=True)
+    val_dataloader = Dataloader(val_dataset, batch_size=8, shuffle=False)
     #X_train, X_test, y_train, y_test = create_datasets(image_dir, mask_dir)
     #num_train_imgs, train_generator, val_generator = create_generators(data_dir, batch_size, seed)
     start1 = datetime.now()
@@ -77,7 +80,7 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
     model_history = model.fit(train_dataloader,
                               verbose=1,
                               batch_size=batch_size,
-                              #validation_data=(X_test, y_test),
+                              validation_data=val_dataloader,
                               shuffle=False,
                               epochs=epochs)
     # Using memory lists
