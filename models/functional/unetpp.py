@@ -1,6 +1,6 @@
 from tensorflow import keras
 from tensorflow.keras import layers
-from unet import convolutional_block
+from .unet import convolutional_block
 
 def UNetPP(input_shape=(256, 256, 1), batch_norm=True, dropout_rate=0.0):
     inputs = layers.Input(input_shape)
