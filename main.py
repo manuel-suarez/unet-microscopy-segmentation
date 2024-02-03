@@ -40,8 +40,9 @@ num_epochs = 50
 from focal_loss import BinaryFocalLoss
 
 #from models.functional.unet import UNet
-from models.implementations.models_v1 import UNet, Attention_UNet, Attention_ResUNet, dice_coef, jacard_coef
-from models.functional.unet import UNet as FUnet
+from models.implementations.models_v1 import dice_coef, jacard_coef
+from models.functional.unet import UNet
+from models.functional.unetpp import UNetPP
 from dataset.generators import create_generators
 from dataset.memory import create_datasets
 from dataset.sequences import Dataset, Dataloader
@@ -146,11 +147,14 @@ def train_model(model, optimizer, loss, metrics, epochs, model_name):
 
 if __name__ == '__main__':
     unet_model = UNet(input_shape)
+    unetpp_model = UNetPP(input_shape)
     #funet_model = FUnet(input_shape)
-    att_unet_model = Attention_UNet(input_shape)
-    att_res_unet_model = Attention_ResUNet(input_shape)
-    models = [unet_model, att_unet_model, att_res_unet_model]
-    names = ['UNet', 'Attention UNet', 'Attention ResUNet']
+    #att_unet_model = Attention_UNet(input_shape)
+    #att_res_unet_model = Attention_ResUNet(input_shape)
+    #models = [unet_model, att_unet_model, att_res_unet_model]
+    models = [unetpp_model]
+    #names = ['UNet', 'Attention UNet', 'Attention ResUNet']
+    names = ['Unetplusplus']
     for model, name in zip(models, names):
         train_model(model,
                     optimizer=Adam(learning_rate=1e-2),
