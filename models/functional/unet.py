@@ -4,7 +4,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from unittest import TestCase
 
-def convolutional_block(input, filters, batch_norm=False):
+def conv_bn_relu(input, filters, batch_norm=False):
     conv = layers.Conv2D(filters=filters, kernel_size=(3, 3), padding='same')(input)
     if batch_norm:
         conv = layers.BatchNormalization(axis=3)(conv)
@@ -12,11 +12,11 @@ def convolutional_block(input, filters, batch_norm=False):
 
     return conv
 
-def encoder_block(input, filters, batch_norm=False, dropout_rate=0.0):
+def convolutional_block(input, filters, batch_norm=False, dropout_rate=0.0):
     # First convolutional block
-    conv = convolutional_block(input, filters, batch_norm)
+    conv = conv_bn_relu(input, filters, batch_norm)
     # Second convolutional block
-    conv = convolutional_block(conv, filters, batch_norm)
+    conv = conv_bn_relu(conv, filters, batch_norm)
     if dropout_rate > 0:
         conv = layers.Dropout(dropout_rate)(conv)
 
@@ -36,24 +36,40 @@ def decoder_block(input, skip, filters, batch_norm=False, dropout_rate=0.0):
 
 def UNet(input_shape=(256, 256, 1), batch_norm=True, dropout_rate=0.0):
     inputs = layers.Input(input_shape)
-    # Encoder path
-    block1 = encoder_block(inputs, 64, batch_norm, dropout_rate)
-    pool1  = layers.MaxPooling2D(pool_size=(2,2))(block1)
-    block2 = encoder_block(pool1, 128, batch_norm, dropout_rate)
-    pool2  = layers.MaxPooling2D(pool_size=(2,2))(block2)
-    block3 = encoder_block(pool2, 256, batch_norm, dropout_rate)
-    pool3  = layers.MaxPooling2D(pool_size=(2,2))(block3)
-    block4 = encoder_block(pool3, 512, batch_norm, dropout_rate)
-    pool4  = layers.MaxPooling2D(pool_size=(2,2))(block4)
+    # Encoder Path: 256 -> 128 -> 64 -> 32 -> 16 -> 8
+    # Encoder Block1 : convolutional + max pool : 256 -> 128
+    block128 = convolutional_block(inputs, 64, batch_norm, dropout_rate)
+    pool64   = layers.MaxPooling2D(pool_size=(2,2))(block128)
+    # Encoder Block2 : convolutional + max pool : 128 -> 64
+    block64  = convolutional_block(pool64, 128, batch_norm, dropout_rate)
+    pool32   = layers.MaxPooling2D(pool_size=(2,2))(block64)
+    # Encoder Block3 : convolutional + max pool : 64 -> 32
+    block32  = convolutional_block(pool32, 256, batch_norm, dropout_rate)
+    pool16   = layers.MaxPooling2D(pool_size=(2,2))(block32)
+    # Encoder Block4 : convolutional + max pool : 32 -> 16
+    block16  = convolutional_block(pool16, 512, batch_norm, dropout_rate)
+    pool8    = layers.MaxPooling2D(pool_size=(2,2))(block16)
     # Bottleneck
-    block5 = encoder_block(pool4, 1024, batch_norm, dropout_rate)
-    # Decoder path
-    upblock4 = decoder_block(block5, block4, 512, batch_norm, dropout_rate)
-    upblock3 = decoder_block(upblock4, block3, 256, batch_norm, dropout_rate)
-    upblock2 = decoder_block(upblock3, block2, 128, batch_norm, dropout_rate)
-    upblock1 = decoder_block(upblock2, block1, 64, batch_norm, dropout_rate)
+    block8   = convolutional_block(pool8, 1024, batch_norm, dropout_rate)
+    # Decoder path: 8 -> 16 -> 32 -> 64 -> 128 -> 256
+    # Decoder Block4 : upsample + concat + convolutional : 8 -> 16
+    up_block16 = layers.UpSampling2D(size=(2, 2), data_format="channels_last")(block8)
+    concat16   = layers.concatenate([up_block16, block16], axis=3)
+    dec_block16 = convolutional_block(concat16, 512, batch_norm, dropout_rate)
+    # Decoder Block3 : upsample + concat + convolutional : 16 -> 32
+    up_block32 = layers.UpSampling2D(size=(2, 2), data_format="channels_last")(dec_block16)
+    concat32 = layers.concatenate([up_block32, block32], axis=3)
+    dec_block32 = convolutional_block(concat32, 256, batch_norm, dropout_rate)
+    # Decoder Block2 : upsample + concat + convolutional : 32 -> 64
+    up_block64 = layers.UpSampling2D(size=(2, 2), data_format="channels_last")(dec_block32)
+    concat64 = layers.concatenate([up_block64, block64], axis=3)
+    dec_block64 = convolutional_block(concat64, 128, batch_norm, dropout_rate)
+    # Decoder Block1 : upsample + concat + convolutional : 64 -> 128
+    up_block128 = layers.UpSampling2D(size=(2, 2), data_format="channels_last")(dec_block64)
+    concat128 = layers.concatenate([up_block128, block128], axis=3)
+    dec_block128 = convolutional_block(concat128, 64, batch_norm, dropout_rate)
     # Classification layer
-    outputs = layers.Conv2D(1, kernel_size=(1,1))(upblock1)
+    outputs = layers.Conv2D(1, kernel_size=(1,1))(dec_block128)
     outputs = layers.BatchNormalization(axis=3)(outputs)
     outputs = layers.Activation('sigmoid')(outputs)
 
