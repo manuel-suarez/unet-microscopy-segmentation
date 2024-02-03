@@ -1,6 +1,6 @@
 from tensorflow import keras
 from tensorflow.keras import layers
-from .unet import convolutional_block
+from unet import convolutional_block
 
 def AttentionUNet(input_shape=(256, 256, 1), batch_norm=True, dropout_rate=0.0):
     inputs = layers.Input(input_shape)
@@ -42,7 +42,7 @@ def AttentionUNet(input_shape=(256, 256, 1), batch_norm=True, dropout_rate=0.0):
     g_32 = convolutional_block(y_32, 256, batch_norm, dropout_rate)
     # Decoder Block2 : upsample + concat + convolutional : 32 -> 64
     theta_x_64 = layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(2, 2), padding='same')(x_64)
-    phi_g_64 = layers.Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding='same')(g_32)
+    phi_g_64 = layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same')(g_32)
     concat_xg_64 = layers.add([phi_g_64, theta_x_64])
     act_xg_64 = layers.Activation('relu')(concat_xg_64)
     psi_64 = layers.Conv2D(filters=1, kernel_size=(1, 1), padding='same')(act_xg_64)
@@ -51,8 +51,8 @@ def AttentionUNet(input_shape=(256, 256, 1), batch_norm=True, dropout_rate=0.0):
     y_64 = layers.multiply([x_64, upsample_psi_64])
     g_64 = convolutional_block(y_64, 256, batch_norm, dropout_rate)
     # Decoder Block1 : upsample + concat + convolutional : 64 -> 128
-    theta_x_128 = layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(2, 2), padding='same')(x_128)
-    phi_g_128 = layers.Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding='same')(g_64)
+    theta_x_128 = layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(2, 2), padding='same')(x_128)
+    phi_g_128 = layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same')(g_64)
     concat_xg_128 = layers.add([phi_g_128, theta_x_128])
     act_xg_128 = layers.Activation('relu')(concat_xg_128)
     psi_128 = layers.Conv2D(filters=1, kernel_size=(1, 1), padding='same')(act_xg_128)

@@ -356,5 +356,5 @@ def Attention_ResUNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=T
 
 if __name__ == "__main__":
     input_shape = (256, 256, 1)
-    model = UNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True)
+    model = Attention_UNet(input_shape, NUM_CLASSES=1, dropout_rate=0.0, batch_norm=True)
     print(model.summary())
